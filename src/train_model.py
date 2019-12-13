@@ -22,8 +22,8 @@ if __name__ == "__main__":
     utils.set_global_seed(42)
     utils.prepare_cudnn(deterministic=True)
 
-    image_size = (300, 300)
-    batch_size = 16
+    image_size = (416, 416)
+    batch_size = 8
     num_workers = 0
 
     dataset = PetDataset(

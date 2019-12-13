@@ -7,7 +7,7 @@ scikit-image
 tqdm
 torch==1.3.0
 torchvision==0.4.0
-catalyst
+catalyst==19.12
 albumentations
 tensorboard
 tensorboardX
