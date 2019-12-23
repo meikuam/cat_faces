@@ -10,7 +10,7 @@ This project uses ResNetLW and MobileNetLW from [here](https://github.com/DrSlee
 
 The Oxford-IIIT Pet Dataset from [here](https://www.robots.ox.ac.uk/~vgg/data/pets).
 
-## Howto:
+## How to train model:
 
 * make development environment using docker:
 
@@ -29,3 +29,18 @@ $ ./download_dataset.sh
 ```bash
 python src/train_model.py
 ```
+
+
+# How to start Telegram bot:
+
+* Get bot token from [botfather](https://t.me/botfather);
+
+* Put it to `src/start_bot.py`;
+
+* If you train model, change `traced_model_path` variable in `src/start_bot.py`;
+
+* Run:
+
+    ```bash
+    python src/start_bot.py
+    ```

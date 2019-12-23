@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('.')
 
@@ -13,9 +14,11 @@ from catalyst.dl.callbacks import DiceCallback, IouCallback, CriterionCallback, 
 from catalyst.contrib.criterion import DiceLoss, IoULoss
 from catalyst.contrib.optimizers import RAdam, Lookahead
 
-from src.dataset import PetDataset
-from src.model.mobilenet import MBv2
+from src.dataset.dataset import PetDataset
+from src.model.mobilenet import MBv2, models_urls
+from src.utils.helpers import maybe_download
 from src.model.model_wrapper import ModelWrapper
+
 
 if __name__ == "__main__":
 
@@ -61,6 +64,70 @@ if __name__ == "__main__":
     loaders["valid"] = valid_loader
     ##############################
     model = MBv2(num_classes=2)
+    # load pretrained weights
+    model_state = model.state_dict()
+    bname = 'mbv2_voc'
+    key = 'rf_lw' + bname
+    url = models_urls[bname]
+    state_dict = maybe_download(key, url)
+
+    for key in model_state.keys():
+        if key in state_dict:
+            if model_state[key].shape != state_dict[key].shape:
+
+                if len(model_state[key].shape) != len(state_dict[key].shape):
+                    print('uncapable key:', key)
+                elif len(model_state[key].shape) == 1:
+                    shape_copy = [
+                        min(model_state[key].shape[0], state_dict[key].shape[0]),
+                    ]
+                    model_state[key][:shape_copy[0]] = state_dict[key][:shape_copy[0]]
+                elif len(model_state[key].shape) == 2:
+                    shape_copy = [
+                        min(model_state[key].shape[0], state_dict[key].shape[0]),
+                        min(model_state[key].shape[1], state_dict[key].shape[1]),
+                    ]
+                    model_state[key][
+                    :shape_copy[0],
+                    :shape_copy[1]] = state_dict[key][
+                                      :shape_copy[0],
+                                      :shape_copy[1]]
+
+                elif len(model_state[key].shape) == 3:
+                    shape_copy = [
+                        min(model_state[key].shape[0], state_dict[key].shape[0]),
+                        min(model_state[key].shape[1], state_dict[key].shape[1]),
+                        min(model_state[key].shape[2], state_dict[key].shape[2]),
+                    ]
+                    model_state[key][
+                    :shape_copy[0],
+                    :shape_copy[1],
+                    :shape_copy[2]] = state_dict[key][
+                                      :shape_copy[0],
+                                      :shape_copy[1],
+                                      :shape_copy[2]]
+                elif len(model_state[key].shape) == 4:
+
+                    shape_copy = [
+                        min(model_state[key].shape[0], state_dict[key].shape[0]),
+                        min(model_state[key].shape[1], state_dict[key].shape[1]),
+                        min(model_state[key].shape[2], state_dict[key].shape[2]),
+                        min(model_state[key].shape[3], state_dict[key].shape[3]),
+                    ]
+                    model_state[key][
+                    :shape_copy[0],
+                    :shape_copy[1],
+                    :shape_copy[2],
+                    :shape_copy[3]] = state_dict[key][
+                                      :shape_copy[0],
+                                      :shape_copy[1],
+                                      :shape_copy[2],
+                                      :shape_copy[3]]
+            else:
+                model_state[key] = state_dict[key]
+
+    model.load_state_dict(model_state, strict=False)
+
     model_wrapper = ModelWrapper(model)
     ##############################
     learning_rate = 0.001
@@ -77,9 +144,11 @@ if __name__ == "__main__":
 
     #########################
 
-    num_epochs = 30
-    logdir = "logs/segmentation"
-
+    num_epochs = 50
+    logdir = "logs_pretrain/segmentation"
+    resume_path = f"{logdir}/checkpoints/last_full.pth"
+    if not os.path.isfile(resume_path):
+        resume_path = None
     device = utils.get_device()
     print(f"device: {device}")
 
@@ -87,11 +156,6 @@ if __name__ == "__main__":
     # in our case we get "image" and "mask" keys in dataset __getitem__
     runner = SupervisedRunner(device=device, input_key="image", input_target_key="mask")
 
-    ##########################
-
-    # %tensorboard --logdir {logdir}
-
-    #########################
 
     # we have multiple criterions
     criterion = {
@@ -105,10 +169,8 @@ if __name__ == "__main__":
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
-
         # our dataloaders
         loaders=loaders,
-
         callbacks=[
             # Each criterion is calculated separately.
             CriterionCallback(
@@ -126,7 +188,6 @@ if __name__ == "__main__":
                 prefix="loss_bce",
                 criterion_key="bce"
             ),
-
             # And only then we aggregate everything into one loss.
             CriterionAggregatorCallback(
                 prefix="loss",
@@ -134,24 +195,21 @@ if __name__ == "__main__":
                 # because we want weighted sum, we need to add scale for each loss
                 loss_keys={"loss_dice": 1.0, "loss_iou": 1.0, "loss_bce": 0.8},
             ),
-
             # metrics
             DiceCallback(input_key="mask"),
             IouCallback(input_key="mask"),
         ],
         # path to save logs
         logdir=logdir,
-
+        # path to resume training if available
+        resume=resume_path,
         num_epochs=num_epochs,
-
         # save our best checkpoint by IoU metric
         main_metric="iou",
         # IoU needs to be maximized.
         minimize_metric=False,
-
         # for FP16. It uses the variable from the very first cell
         fp16=None,
-
         # prints train logs
         verbose=True,
     )

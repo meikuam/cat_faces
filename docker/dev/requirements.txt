@@ -12,3 +12,8 @@ albumentations
 tensorboard
 tensorboardX
 xmltodict
+requests
+pandas
+beautifulsoup4
+lxml
+python-telegram-bot
