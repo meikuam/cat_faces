@@ -94,8 +94,8 @@ def crop_image_by_mask(
         binary = crop_image(binary, bbox)
 
         dilated = dilate_mask(binary, radius=edge_thickness)
+        image[dilated == 0] = 0
         dilated[binary > 0] = 0
-
         alpha_image = np.concatenate([image, binary[:, :, np.newaxis]], axis=2)
         #         alpha_image[dilated > 0] = 255
 

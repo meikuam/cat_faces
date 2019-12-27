@@ -11,7 +11,11 @@ from src.text_processor.dumb_text_processor import DumbTextProcessor
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='messages.log', level=logging.INFO)
+    logging.basicConfig(
+        filename='messages.log',
+        format="%(asctime)-15s %(message)s'",
+        level=logging.INFO
+    )
     bot_token = ''
     traced_model_path = 'traced_model.pt'
 
@@ -23,7 +27,7 @@ if __name__ == "__main__":
         ),
         StickerImageProcessor(
             erode_thickness=3,
-            edge_thickness=5,
+            edge_thickness=1,
             edge_color=(150, 150, 150, 255)
         )
     ])

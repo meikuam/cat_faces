@@ -24,8 +24,18 @@ class StickerImageProcessor(ImageProcessor):
         :param mask_data:
         :return:
         """
+        # preprocess image_data
+        image = image_data.copy()
+        if image.ndim == 2:
+            # grayscale image
+            image = image[:, :, np.newaxis]
+            image = np.repeat(image, repeats=3, axis=2)
+        elif image.ndim == 3 and image.shape[2] == 4:
+            # image with alpha channel
+            image = image[:, :, 0:3]
+
         image_processed = crop_image_by_mask(
-            image=image_data,
+            image=image,
             mask=mask_data,
             erode_thickness=self.erode_thickness,
             edge_thickness=self.edge_thickness,

@@ -3,7 +3,6 @@ from threading import Thread, Lock
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import time
-import random
 import logging
 
 import io
@@ -14,7 +13,7 @@ import traceback
 
 from src.image_processor.image_processor import ImageProcessor
 from src.text_processor.text_processor import TextProcessor
-
+from src.utils.helpers import imread
 
 class StonksBot:
     
@@ -117,7 +116,7 @@ class StonksBot:
                     # send result
                     self.send_numpy_image(
                         image_data=processed_image_data,
-                        image_type="sticker",
+                        image_type="document",
                         chat_id=chat_id,
                         context=context
                     )
@@ -129,27 +128,26 @@ class StonksBot:
 
         def randomCommand(update: Update, context: CallbackContext):
             """get image from thiscatdoesnotexist.com, and make sticker from it."""
-            pass
-            # chat_id = update.message.chat_id
-            # try:
-            #     url = 'https://thiscatdoesnotexist.com/'
-            #
-            #     image_data = None
-            #     if image_data is not None:
-            #         if self.dump_messages:
-            #             self.dump_image(image_data, f"{chat_id}_{time.time()}.png")
-            #         # processing
-            #         processed_image_data = self.image_processor(image_data)
-            #         # send result
-            #         self.send_numpy_image(
-            #             image_data=processed_image_data,
-            #             image_type="sticker",
-            #             chat_id=chat_id,
-            #             context=context
-            #         )
-            # except Exception:
-            #     context.bot.send_message(chat_id=chat_id, text='что-то пошло не так')
-            #     logging.warning(f"{self.__class__.__name__}: photo smth wrong {traceback.format_exc()}")
+
+            chat_id = update.message.chat_id
+            try:
+                url = 'https://thiscatdoesnotexist.com/'
+                image_data = imread(url)
+                if self.dump_messages:
+                    self.dump_image(image_data, f"{chat_id}_{time.time()}.png")
+                # processing
+                processed_image_data = self.image_processor(image_data)
+                # print(processed_image_data.shape)
+                # send result
+                self.send_numpy_image(
+                    image_data=processed_image_data,
+                    image_type="sticker",
+                    chat_id=chat_id,
+                    context=context
+                )
+            except Exception:
+                context.bot.send_message(chat_id=chat_id, text='что-то пошло не так')
+                logging.warning(f"{self.__class__.__name__}: photo smth wrong {traceback.format_exc()}")
 
         # def documentMessage(update: Update, context: CallbackContext):
         #     chat_id = update.message.chat_id
@@ -212,7 +210,7 @@ class StonksBot:
                 buffered = io.BytesIO()
 
                 img = Image.fromarray(image_data)
-                print(img.size)
+                # print(img.size)
                 img.save(buffered, format="PNG")
                 buffered.seek(0)
                 if image_type == "document":

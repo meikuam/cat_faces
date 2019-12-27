@@ -39,8 +39,14 @@ python src/train_model.py
 
 * If you train model, change `traced_model_path` variable in `src/start_bot.py`;
 
-* Run:
+* Run (you should install requirements):
 
     ```bash
     python src/start_bot.py
+    ```
+  
+* Or run (as docker image):
+
+    ```bash
+    ./run_prod.sh
     ```

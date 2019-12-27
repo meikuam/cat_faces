@@ -46,7 +46,7 @@ class ModelWorker(ImageProcessor):
                 image = np.repeat(image, repeats=3, axis=2)
             elif image.ndim == 3 and image.shape[2] == 4:
                 # image with alpha channel
-                image = image[:, :, 0:2]
+                image = image[:, :, 0:3]
 
             im_h, im_w = image.shape[:2]
             if im_h > im_w:
@@ -91,7 +91,7 @@ class ModelWorker(ImageProcessor):
             return image_data, mask_data
         except Exception:
             logging.info(f"{self.__class__.__name__}: {traceback.format_exc()}")
-            return image_data, np.zeros(image_data.shape[:2])
+            return image_data, np.ones(image_data.shape[:2])
         finally:
             self.mutex.release()
 
@@ -152,4 +152,4 @@ def test_model_image_processor():
 
 if __name__ == '__main__':
     test_model_worker()
-    test_model_image_processor()
+    # test_model_image_processor()

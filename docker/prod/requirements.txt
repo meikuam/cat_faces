@@ -1,0 +1,6 @@
+Pillow
+scikit-image
+torch==1.3.0
+torchvision==0.4.1
+requests
+python-telegram-bot
